@@ -4,12 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>برنامج ترتيب القيم</title>
-</head>
-<body>
-    <h1>برنامج ترتيب القيم</h1>
-    <button onclick="startApp()">بدأ</button>
-    <div id="results"></div>
+
 
     <script>
 	
@@ -156,6 +151,179 @@ injectStyles();
             });
             resultText += "</ul>";
             document.getElementById("results").innerHTML = resultText;
+        }
+    </script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Condorcet Method</title>
+    <style>
+
+        h1 {
+            margin-top: 20px;
+        }
+        #input-container {
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+        }
+        .value-field {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #add-button, #start-button {
+            background: #4CAF50;
+            color: white;
+            margin: 10px;
+        }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #modal-content {
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>برنامج ترتيب القيم</h1>
+    <div id="input-container">
+        <div id="fields-container">
+            <div class="value-field">
+                <input type="text" class="moral-value" placeholder="اضف قيمة" />
+            </div>
+        </div>
+        <button id="add-button">اضف قيمة</button>
+        <button id="start-button">ابدء</button>
+    </div>
+    <div id="results"></div>
+    <div id="modal">
+        <div id="modal-content">
+            <p id="modal-question"></p>
+            <button id="choice1"></button>
+            <button id="choice2"></button>
+        </div>
+    </div>
+
+    <script>
+        const addButton = document.getElementById("add-button");
+        const startButton = document.getElementById("start-button");
+        const fieldsContainer = document.getElementById("fields-container");
+        const modal = document.getElementById("modal");
+        const modalQuestion = document.getElementById("modal-question");
+        const choice1Button = document.getElementById("choice1");
+        const choice2Button = document.getElementById("choice2");
+        const resultsDiv = document.getElementById("results");
+        let moralValues = [];
+        let pairwisePreferences = {};
+        let currentComparison = 0;
+        let sortedValues = [];
+
+        addButton.addEventListener("click", () => {
+            const fieldDiv = document.createElement("div");
+            fieldDiv.className = "value-field";
+            fieldDiv.innerHTML = '<input type="text" class="moral-value" placeholder="اضف قيمة" />';
+            fieldsContainer.appendChild(fieldDiv);
+        });
+
+        startButton.addEventListener("click", () => {
+            moralValues = Array.from(document.querySelectorAll(".moral-value"))
+                .map(input => input.value.trim())
+                .filter(value => value !== "");
+
+            if (moralValues.length < 2) {
+                alert("Please enter at least two moral values.");
+                return;
+            }
+
+            pairwisePreferences = {};
+            for (const value of moralValues) {
+                pairwisePreferences[value] = 0;
+            }
+
+            currentComparison = 0;
+            showNextComparison();
+        });
+
+        function showNextComparison() {
+            if (currentComparison >= moralValues.length * (moralValues.length - 1) / 2) {
+                finalizeResults();
+                return;
+            }
+
+            const [value1, value2] = getNextComparison();
+            modalQuestion.textContent = `
+نخيل قمة ${value1} مع انعدام ${value2} . او قمة ${value2} ، مع انعدام ${value1} . ايهما اولى بالنسبة اليك ؟.\n1. ${value1}\n2. ${value2}`;
+            choice1Button.textContent = value1;
+            choice2Button.textContent = value2;
+
+            choice1Button.onclick = () => {
+                pairwisePreferences[value1]++;
+                currentComparison++;
+                showNextComparison();
+            };
+
+            choice2Button.onclick = () => {
+                pairwisePreferences[value2]++;
+                currentComparison++;
+                showNextComparison();
+            };
+
+            modal.style.display = "flex";
+        }
+
+        function getNextComparison() {
+            let index = 0;
+            for (let i = 0; i < moralValues.length; i++) {
+                for (let j = i + 1; j < moralValues.length; j++) {
+                    if (index === currentComparison) {
+                        return [moralValues[i], moralValues[j]];
+                    }
+                    index++;
+                }
+            }
+        }
+
+        function finalizeResults() {
+            sortedValues = Object.entries(pairwisePreferences)
+                .sort((a, b) => b[1] - a[1])
+                .map(entry => entry[0]);
+
+            let resultText = "<h2>:القيم مرتبة</h2><ul>";
+            sortedValues.forEach((value, index) => {
+                resultText += `<li>${index + 1}. ${value}</li>`;
+            });
+            resultText += "</ul>";
+            resultsDiv.innerHTML = resultText;
+            modal.style.display = "none";
         }
     </script>
 </body>
