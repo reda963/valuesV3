@@ -1,177 +1,161 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Condorcet Method</title>
-    <style>
+    <title>برنامج ترتيب القيم</title>
+</head>
+<body>
+    <h1>برنامج ترتيب القيم</h1>
+    <button onclick="startApp()">بدأ</button>
+    <div id="results"></div>
+
+    <script>
+	
+	function injectStyles() {
+    const css = `
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background: linear-gradient(to bottom, #3b5998, #8b9dc3);
-            color: #fff;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
             text-align: center;
+            line-height: 1.6;
         }
+
         h1 {
-            margin-top: 20px;
+            font-size: 2.5rem;
+            color: #4682b4;
+            margin: 20px 0;
         }
-        #input-container {
-            margin: 20px auto;
-            width: 80%;
-            max-width: 600px;
-        }
-        .value-field {
-            margin-bottom: 10px;
-        }
+
         button {
+            background-color: #5dade2;
+            color: white;
+            font-size: 1.2rem;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
-        #add-button, #start-button {
-            background: #4CAF50;
-            color: white;
-            margin: 10px;
+
+        button:hover {
+            background-color: #3498db;
+            transform: scale(1.05);
         }
-        #modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        #modal-content {
-            background: #fff;
-            color: #000;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-        }
+
         #results {
             margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-    <h1>برنامج ترتيب القيم</h1>
-    <div id="input-container">
-        <div id="fields-container">
-            <div class="value-field">
-                <input type="text" class="moral-value" placeholder="اضف قيمة" />
-            </div>
-        </div>
-        <button id="add-button">اضف قيمة</button>
-        <button id="start-button">ابدء</button>
-    </div>
-    <div id="results"></div>
-    <div id="modal">
-        <div id="modal-content">
-            <p id="modal-question"></p>
-            <button id="choice1"></button>
-            <button id="choice2"></button>
-        </div>
-    </div>
-
-    <script>
-        const addButton = document.getElementById("add-button");
-        const startButton = document.getElementById("start-button");
-        const fieldsContainer = document.getElementById("fields-container");
-        const modal = document.getElementById("modal");
-        const modalQuestion = document.getElementById("modal-question");
-        const choice1Button = document.getElementById("choice1");
-        const choice2Button = document.getElementById("choice2");
-        const resultsDiv = document.getElementById("results");
-        let moralValues = [];
-        let pairwisePreferences = {};
-        let currentComparison = 0;
-        let sortedValues = [];
-
-        addButton.addEventListener("click", () => {
-            const fieldDiv = document.createElement("div");
-            fieldDiv.className = "value-field";
-            fieldDiv.innerHTML = '<input type="text" class="moral-value" placeholder="اضف قيمة" />';
-            fieldsContainer.appendChild(fieldDiv);
-        });
-
-        startButton.addEventListener("click", () => {
-            moralValues = Array.from(document.querySelectorAll(".moral-value"))
-                .map(input => input.value.trim())
-                .filter(value => value !== "");
-
-            if (moralValues.length < 2) {
-                alert("Please enter at least two moral values.");
-                return;
-            }
-
-            pairwisePreferences = {};
-            for (const value of moralValues) {
-                pairwisePreferences[value] = 0;
-            }
-
-            currentComparison = 0;
-            showNextComparison();
-        });
-
-        function showNextComparison() {
-            if (currentComparison >= moralValues.length * (moralValues.length - 1) / 2) {
-                finalizeResults();
-                return;
-            }
-
-            const [value1, value2] = getNextComparison();
-            modalQuestion.textContent = `ما القيمة الاكثر اهمية بالنسبة اليك ?\n1. ${value1}\n2. ${value2}`;
-            choice1Button.textContent = value1;
-            choice2Button.textContent = value2;
-
-            choice1Button.onclick = () => {
-                pairwisePreferences[value1]++;
-                currentComparison++;
-                showNextComparison();
-            };
-
-            choice2Button.onclick = () => {
-                pairwisePreferences[value2]++;
-                currentComparison++;
-                showNextComparison();
-            };
-
-            modal.style.display = "flex";
+            padding: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            width: 80%;
+            max-width: 600px;
+            text-align: left;
         }
 
-        function getNextComparison() {
-            let index = 0;
-            for (let i = 0; i < moralValues.length; i++) {
-                for (let j = i + 1; j < moralValues.length; j++) {
-                    if (index === currentComparison) {
-                        return [moralValues[i], moralValues[j]];
+        #results h2 {
+            color: #4682b4;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        #results ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #results li {
+            font-size: 1.2rem;
+            margin: 5px 0;
+            padding: 5px 10px;
+            background-color: #eaf2f8;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            button {
+                font-size: 1rem;
+                padding: 8px 16px;
+            }
+
+            #results {
+                width: 90%;
+            }
+        }
+    `;
+    
+    const style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+}
+
+// Call this function to inject the styles when the page loads
+injectStyles();
+
+        function startApp() {
+            const moralValues = inputMoralValues();
+            const pairwisePreferences = getPairwisePreferences(moralValues);
+            const sortedValues = condorcetMethod(pairwisePreferences);
+            displayResults(sortedValues);
+        }
+
+
+        function inputMoralValues() {
+            let numValues = prompt("كم عدد القيم التي تريد اضافتها ؟");
+            numValues = parseInt(numValues);
+            const values = [];
+
+            for (let i = 0; i < numValues; i++) {
+                const value = prompt(`ادخل قيمة ${i + 1}:`);
+                values.push(value);
+            }
+            return values;
+        }
+
+        function getPairwisePreferences(values) {
+            const pairwisePreferences = {};
+
+            for (let i = 0; i < values.length; i++) {
+                for (let j = i + 1; j < values.length; j++) {
+                    const pair = [values[i], values[j]];
+                    const preference = prompt(`تخيل قمة . ${pair[0]} . مع انعدام  ${pair[1]} .  او قمة ${pair[1]} مع انعدام ${pair[0]}  أيهما أولى بالنسبة اليك ؟ . \n1. ${pair[0]}\n2. ${pair[1]}\n`);
+                    if (!pairwisePreferences[pair[0]]) pairwisePreferences[pair[0]] = 0;
+                    if (!pairwisePreferences[pair[1]]) pairwisePreferences[pair[1]] = 0;
+
+                    if (preference === '1') {
+                        pairwisePreferences[pair[0]] += 1;
+                    } else if (preference === '2') {
+                        pairwisePreferences[pair[1]] += 1;
                     }
-                    index++;
                 }
             }
+            return pairwisePreferences;
         }
 
-        function finalizeResults() {
-            sortedValues = Object.entries(pairwisePreferences)
+        function condorcetMethod(pairwisePreferences) {
+            const sortedValues = Object.entries(pairwisePreferences)
                 .sort((a, b) => b[1] - a[1])
                 .map(entry => entry[0]);
+            return sortedValues;
+        }
 
+        function displayResults(sortedValues) {
             let resultText = "<h2>:القيم مرتبة</h2><ul>";
             sortedValues.forEach((value, index) => {
                 resultText += `<li>${index + 1}. ${value}</li>`;
             });
             resultText += "</ul>";
-            resultsDiv.innerHTML = resultText;
-            modal.style.display = "none";
+            document.getElementById("results").innerHTML = resultText;
         }
     </script>
 </body>
